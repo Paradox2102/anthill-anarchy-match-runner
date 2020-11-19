@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Overlay</title>
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+        <script type="text/javascript" charset="utf-8">
+            $(document).ready(function() {
+                namespace = '/overlay';
+                var socket = io(namespace);
+                socket.on('update_text', function(data, cb) {
+                    for(const property in data) {
+                        $("#" + property + " p").text(data[property]);
+                    }
+                    if(cb) { cb(); }
+                });
+            });
+        </script>
+        <style>
+            * { 
+                font-family : Verdana, Arial, san-serif;  
+                font-size: 40px;
+                text-shadow: 2px 2px #000000; 
+            }
+            div#container { height="100%"; }
+            div#redteam { position:relative; height: 10em; }
+            div#redteam p { position: fixed; top: 0; left: 50%; transform: translate(-50%, -50%); color: red; }
+            div#blueteam { position:relative; height: 10em; }
+            div#blueteam p { position: fixed; bottom: 0; left: 50%; transform: translate(-50%, 50%); color: blue; }
+            div#match { position:relative; height: 10em; }
+            div#match p { position: fixed; top: 50%; left: 0; transform: translate(0, -50%); color: white; }
+            div#time { position:relative; height: 10em; }
+            div#time p { position: fixed; top: 50%; right: 0; transform: translate(0, -50%); color: white; }
+            div#middle { position:relative; height: 10em; }
+            div#middle p { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; }
+        </style>
+    </head>
+    <body>
+        <div container>
+            <div id="redteam"><p></p></div>
+            <div id="blueteam"><p></p></div>
+            <div id="match"><p></p></div>
+            <div id="time"><p></p></div>
+            <div id="middle"><p></p></div>        
+        </div>
+    </body>
+</html>
