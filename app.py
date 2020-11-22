@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 
 import logging
+import threading 
+import math
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 import jinja2 
-import gevent
+#import gevent
+#import gevent.time as time
+import eventlet
+eventlet.monkey_patch()
+import time
 
 import sheet
+
+impatient = False # For debugging and testing; set to false for competition
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -18,41 +26,278 @@ app.config['SECRET_KEY'] = 'secret!'
 #app.config['DEBUG'] = True
 socketio = SocketIO(app, always_connect=True)
 
-loader = jinja2.FileSystemLoader('/usr/src/app/templates')
+loader = jinja2.FileSystemLoader('template')
 env = jinja2.Environment(loader=loader, autoescape=False)
 
-def update_text(**d):
-    logger.info("Update: %r", d)
-    socketio.emit('update_text', d, namespace="/overlay")
-    
-    
-def clear_text():
-    update_text(redteam="", blueteam="", middle="", time="", match="")
+current_thread = None # to abort current thread, replacing it with another
+current_buttons = []
+current_text = {}
+current_table = ("", None)
 
+class Thread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.stop_event = threading.Event()
+        
+    def stop(self):
+        logger.info(f"Stopping thread {self.name}")
+        self.stop_event.set()
+        
+    def is_stopped(self):
+        return self.stop_event.is_set()
+        
+    def sleep(self, sleep_time):
+        if self.is_stopped():
+            raise Exception(f"Thread {self.name} stopped")
+        start = time.time()
+        while True:
+            sleep_remaining = sleep_time + start - time.time()
+            if sleep_remaining <= 0: break
+            time.sleep(min(sleep_remaining, 1))
+            if self.is_stopped():
+                raise Exception(f"Thread {self.name} stopped")
+        
+        
+class MatchThread(Thread):
+    """Run a match from countdown to "scoring in progress".
+    """
+    # These constants control the timing of the game.  All are in seconds.
+    match_length = 10 if impatient else 120 # Length of match play
+    count_down = 3 # Number of beeps before match play
+    count_down_delay = 2 # delay between pushing button and countdown starting
+    end_game = 5 if impatient else 10 # When to sound warning during match play
+    
+    def __init__(self, match_id):
+        super().__init__(name="Match " + match_id)
+        self.match_id = match_id
+        self.match = sheet.get_match(match_id)
+    
+    def run(self):
+        update_text(
+            redteam=self.match["Red Competitors"],
+            blueteam=self.match["Blue Competitors"],
+            match=self.match_id,
+            time="Starting",
+        )
+        
+        set_buttons([dict(event='abort_match', arg=self.match_id, label=f"Abort match {self.match_id}")])
+
+        old_seconds = self.match_length + self.count_down + self.count_down_delay
+        now = time.time()
+        end_time = now + old_seconds
+        logger.info(f"Running match {self.match_id} from {now} to {end_time}")
+        
+        while not self.is_stopped():
+            current_time = time.time()
+            seconds = math.ceil(end_time - current_time)
+            
+            if seconds != old_seconds:
+                logger.info(f"Match {self.match_id}, seconds={seconds}")
+                old_seconds = seconds
+                if seconds < 0:
+                    update_text(middle="Game Over!<br/><br/>Scoring in Progress", clear=False)
+                    set_buttons([
+                        dict(event='show_match_scores', arg=self.match_id,
+                             label=f"Show scores for match {self.match_id}"),
+                        dict(event='abort_match', arg=self.match_id,
+                             label=f"Abandon match {self.match_id}"),
+                    ])
+                    break
+                else:
+                    # Set time field
+                    if seconds <= self.match_length:
+                        update_text(time="{min:02d}:{sec:02d}".format(min=seconds // 60, sec=seconds % 60), clear=False)
+                    elif seconds > self.match_length and seconds <= self.match_length + self.count_down:
+                        update_text(time=(seconds - self.match_length), clear=False)
+                        
+                    # Play sound
+                    if seconds == 0:
+                        play_audio('end')
+                    elif seconds == self.end_game:
+                        play_audio('warning')
+                    elif seconds == self.match_length:
+                        play_audio('start')
+                    elif seconds > self.match_length and seconds <= self.match_length + self.count_down:
+                        play_audio('countdown')
+            self.sleep(0.25) # avoid skipping seconds because of oversleeping
+
+            
+class DefaultThread(Thread):
+    sleep_time = 5 if impatient else 10 
+    
+    def __init__(self):
+        super().__init__(name="Default")
+        #methods = [self.show_matches, self.show_team]
+        
+    def run(self):
+        buttons = [dict(event="next_match", arg=match['Match'], label=f"Next match {match['Match']}") 
+                   for match in sheet.get_matches()]
+        set_buttons(buttons)
+
+        try:
+            while not self.is_stopped():
+                self.sleep(self.sleep_time)
+                matches = sheet.get_matches(flush=True)[:10]
+                text = env.get_template('match.html').render(matches=matches)
+                logger.info(f"Match table: {text}")
+                show_table("Matches", text)
+                self.sleep(self.sleep_time)   
+                show_table("", None)
+
+                self.sleep(self.sleep_time)                   
+                teams = sheet.get_teams(flush=True)[:10]
+                teams = sorted(teams, key=lambda t: (t['Rank'], t['Team']))
+                logger.info(f"Sorted teams: {teams}")
+                text = env.get_template('team.html').render(teams=teams)
+                logger.info(f"Team table: {text}")
+                show_table("Teams", text)
+                
+                self.sleep(self.sleep_time)   
+                show_table("", None)
+        finally:
+            show_table("", None)
+            
+
+class MatchScoreThread(Thread):
+    sleep_time = 5 if impatient else 30
+    
+    def __init__(self, match_id):
+        super().__init__(name="Match " + match_id)
+        self.match_id = match_id
+        self.match = sheet.get_match(match_id)
+        
+    def run(self):
+        try:
+            update_text()
+            match = sheet.get_match(self.match_id, flush=True)
+            text = env.get_template('match_score.html').render(match=match)
+            logger.info(f"Match score table: {text}")
+            show_table("Match", text)
+            set_buttons([dict(event='abort_match', arg=self.match_id,
+                              label=f"Abandon match {self.match_id}")]);
+            self.sleep(self.sleep_time)
+        finally:
+            show_table("", None)
+
+        set_thread(DefaultThread())
+    
+
+def show_table(name, content):
+    socketio.emit('show_table', content, namespace="/overlay")
+    global current_table
+    current_table = (name, content)
+    log_message(f"Show table {name}")
+    
+def play_audio(name):
+    logger.info("Play audio: %s", name)
+    socketio.emit('play_audio', name, namespace="/overlay")
+    log_message(f"Play audio: {name}")
+    socketio.sleep(0)
+    
+
+def update_text(clear=True, **d):
+    logger.info("Update text: %r", d)
+    if clear:
+        d = {**(dict(redteam="", blueteam="", middle="", time="", match="")), **d}
+    global current_text
+    current_text = {**current_text, **d}
+    socketio.emit('update_text', d, namespace="/overlay")
+    socketio.sleep(0)
+        
     
 @socketio.on('connect', namespace="/overlay")
 def handle_overlay_connect():
-    logger.info("Connect")
+    logger.info("Connect overlay")
     #update_text(redteam="Red", blueteam="Blue", match="R1", time="0:00", middle="Starting soon")
     
     #for i in range(30):
         #gevent.spawn_later(31-i, update_text, time="{min:02d}:{sec:02d}".format(min=i // 60, sec=i % 60))
-    clear_text()
-    next_match("R1")
-    logger.info("Connect done")
+    global current_text
+    update_text(clear=False, **current_text)
+    global current_table
+    show_table(*current_table)
+    logger.info("Connect overlay done")
     
     
+def log_message(message):
+    socketio.emit('log_message', message, namespace="/control")
+    socketio.sleep(0)
+    print(message)
+
+
+@socketio.on('next_match', namespace="/control")
 def next_match(match_id):
+    set_thread()
     match = sheet.get_match(match_id);
     assert match
+    log_message(f"Next match {match_id}")
     update_text(
         redteam=match["Red Competitors"],
         blueteam=match["Blue Competitors"],
-        match=match_id,
-        middle="Starting soon")
+        middle=f"Next match<br/>{match_id}<br/>Starting soon")
+    set_buttons([
+        dict(event="start_match", arg=match_id, label=f"Start match {match_id}"),
+        dict(event="cycle", arg="", label=f"Cancel next match {match_id}"),
+    ])
+
     
+def set_thread(thread=None):
+    logger.info(f"set thread {thread}", exc_info=True)
+    global current_thread
+    if None != current_thread:
+        current_thread.stop()
+    current_thread = thread
+    if None != thread:
+        thread.start()
+    
+    
+@socketio.on('cycle', namespace="/control")
+def cycle(dummy=None):
+    update_text();
+    buttons = [dict(event="next_match", arg=match['Match'], label=f"Next match {match['Match']}") 
+               for match in sheet.get_matches()]
+    set_buttons(buttons)
+    set_thread(DefaultThread())
+    
+    
+@socketio.on('abort_match', namespace="/control")
+def abort_match(match_id):
+    log_message(f"Aborting match {match_id}")
+    cycle()
+    
+   
+@socketio.on('start_match', namespace="/control")
+def start_match(match_id):
+    update_text(middle=f"Starting Match {match_id}")
+    set_thread(MatchThread(match_id))
+    
+    
+@socketio.on('show_match_scores', namespace="/control")
+def show_match_scores(match_id):
+    set_thread(MatchScoreThread(match_id))
+    
+    
+def set_buttons(buttons, clear=True):
+    logger.info("Setting buttons: %r", buttons)
+    global current_buttons
+    current_buttons = buttons
+    socketio.emit('set_buttons', dict(buttons=buttons, clear=clear), namespace="/control")
+    
+    
+@socketio.on('connect', namespace="/control")
+def handle_control_connect():
+    logger.info("Connect control")
+    log_message("Connected")
+    global current_buttons
+    set_buttons(current_buttons)
+    logger.info("Connect control done")
+    if impatient:
+        log_message("Warning: Impatient mode is set, so many times are much shorter than they should be")
+    
+
 
 if __name__ == '__main__':
     logger.info("Running")
+    cycle()
     socketio.run(app, host="0.0.0.0", port=80)
     logger.info("Done")
