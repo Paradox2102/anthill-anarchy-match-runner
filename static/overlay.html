@@ -5,43 +5,102 @@
         <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
         <script type="text/javascript" charset="utf-8">
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const delay = urlParams.get('delay', 0);
+
+            
             $(document).ready(function() {
                 namespace = '/overlay';
                 var socket = io(namespace);
-                socket.on('update_text', function(data, cb) {
+                
+                socket.on('update_text', async function(data, cb) {
+                    if(delay > 0) { await new Promise(r => setTimeout(r, delay*1000)); }
                     for(const property in data) {
-                        $("#" + property + " p").text(data[property]);
+                        $("#" + property + " p").html(data[property]);
                     }
                     if(cb) { cb(); }
                 });
+                
+                socket.on('show_table', async function(data, cb) {
+                    if(delay > 0) { await new Promise(r => setTimeout(r, delay*1000)); }
+                    if(data == null) {
+                        $("#table")[0].style.display = "none";
+                    } else {
+                        $("#table").html(data);
+                        $("#table")[0].style.display = "block";
+                    }
+                    if(cb) { cb(); }
+                });
+
+                socket.on('play_audio', async function(data, cb) {
+                    if(delay > 0) { await new Promise(r => setTimeout(r, delay*1000)); }
+                    var obj = $("audio#" + data)[0];
+                    //obj.volume = 0.1;
+                    obj.play();
+                    if(cb) { cb(); }
+                });                   
             });
         </script>
         <style>
-            * { 
+            audio { volume: 25; }
+            body { background-color: black; }
+            .big { 
                 font-family : Verdana, Arial, san-serif;  
                 font-size: 40px;
-                text-shadow: 2px 2px #000000; 
+                text-shadow: 2px 2px #FFFF00; 
             }
+            td.table,th.table {
+                font-size: 18px;
+                background-color: white;
+                opacity: 50%; 
+                color: black;
+            }
+            td.table.red,th.table.red { color:red !important; }
+            .blue { color: blue !important; }
             div#container { height="100%"; }
-            div#redteam { position:relative; height: 10em; }
-            div#redteam p { position: fixed; top: 0; left: 50%; transform: translate(-50%, -50%); color: red; }
-            div#blueteam { position:relative; height: 10em; }
-            div#blueteam p { position: fixed; bottom: 0; left: 50%; transform: translate(-50%, 50%); color: blue; }
+            div#redteam { position:relative; height: 10em;  }
+            div#redteam p { width: 100%; text-align: center; position: fixed; top: 0; left: 50%; transform: translate(-50%, -50%); color: red; }
+            div#blueteam { position:relative; height: 10em; width: 100% }
+            div#blueteam p { width: 100%; text-align: center; position: fixed; bottom: 0; left: 50%; transform: translate(-50%, 50%); color: blue; }
             div#match { position:relative; height: 10em; }
-            div#match p { position: fixed; top: 50%; left: 0; transform: translate(0, -50%); color: white; }
+            div#match p { position: fixed; top: 50%; left: 0; transform: translate(0, -100%); color: white; }
             div#time { position:relative; height: 10em; }
-            div#time p { position: fixed; top: 50%; right: 0; transform: translate(0, -50%); color: white; }
-            div#middle { position:relative; height: 10em; }
-            div#middle p { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; }
+            div#time p { position: fixed; top: 50%; right: 0; transform: translate(0, -100%); color: white; }
+            div#middle { position:relative; height: 10em; text-align: center; vertical-align: middle; }
+            div#middle p { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); color: green; }
+            div#table {
+                display: none; /* Hidden by default */
+                position: fixed; /* Stay in place */
+                z-index: 1; /* Sit on top */
+                left: 5%;
+                top: 5%;
+                width: 90%; /* Full width */
+                height: 90%; /* Full height */
+                //overflow: auto; /* Enable scroll if needed */
+                //font-size: 24px;
+                //background-color: white;
+                //opacity: 80%; 
+                //color: black;
+                border-spacing: 2px;
+                border: 1px solid black;
+                padding: 5px;
+            }
+            div#table table { width: 100%; height: 100%; }
         </style>
     </head>
     <body>
         <div container>
-            <div id="redteam"><p></p></div>
-            <div id="blueteam"><p></p></div>
-            <div id="match"><p></p></div>
-            <div id="time"><p></p></div>
-            <div id="middle"><p></p></div>        
+            <div class="big" id="redteam"><p></p></div>
+            <div class="big" id="blueteam"><p></p></div>
+            <div class="big" id="match"><p></p></div>
+            <div class="big" id="time"><p></p></div>
+            <div class="big" id="middle"><p></p></div>       
+            <div class="table" id="table"></div>       
         </div>
+        <audio id="countdown" preload="auto" src="/audio/beep-02.mp3" />
+        <audio id="end" preload="auto" src="/audio/ENDMATCH.mp3" />
+        <audio id="start" preload="auto" src="/audio/match_start.wav" />
+        <audio id="warning" preload="auto" src="/audio/train-whistle-01.mp3" />
     </body>
 </html>

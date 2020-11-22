@@ -1,0 +1,22 @@
+<table class="table" style="align: center; vertical-align: middle; width: 100%; height: 100%;">
+    <tr>
+        <th class="table">Rank</th>
+        <th class="table">Team</th>
+        <th class="table">P</th>
+        <th class="table">W</th>
+        <th class="table">D</th>
+        <th class="table">L</th>
+        <th class="table">Points</th>
+    </tr>
+    {% for team in teams %}
+        <tr>
+            <td class="table" align="center">{{ team['Rank'] }}</td>
+            <td class="table" align="center">{{ team['Competitors'] }}</td>
+            <td class="table" align="center">{{ team['Played'] }}</td>
+            <td class="table" align="center">{{ team['Wins'] }}</td>
+            <td class="table" align="center">{{ team['Draws'] }}</td>
+            <td class="table" align="center">{{ team['Losses'] }}</td>
+            <td class="table" align="center">{{ team['Score'] }}</td>
+        </tr>
+    {% endfor %}
+</table>
