@@ -7,11 +7,11 @@ Team lists, match lists, and match scores are maintained in a Google spreadsheet
 Note: There is no attempt to interact with driver station software, so teams are responsible for complying with start/stop.
 
 Two interfaces are provided:
-    http://localhost:8081/overlay.html - Team/audience facing view suitable for video overlay
-    http://localhost:8081/control.html - Administration view with buttons that change the state
+* http://localhost:8081/overlay.html - Team/audience facing view suitable for video overlay
+* http://localhost:8081/control.html - Administration view with buttons that change the state
 
 Note: To use this yourself, you will minimally need to:
-    * Create a Google service user account and save the credentials in `service-credentials.json` (not saved in GitHub).
-    * Create a new Google spreadsheet with the appropriate tables.  See `sheet.py` for the tabe names, and the HTML files in `template` for the column names.
-    * Share the spreadsheet with the service user (read only)
-    * Change the spreadsheet id in `sheet.py`
+* Create a Google service user account and save the credentials in `service-credentials.json` (not saved in GitHub).
+* Create a new Google spreadsheet with the appropriate tables.  See `sheet.py` for the tabe names, and the HTML files in `template` for the column names.
+* Share the spreadsheet with the service user (read only)
+* Change the spreadsheet id in `sheet.py`
