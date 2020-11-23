@@ -2,7 +2,7 @@
 
 This software was written to assist Team Paradox (2102) with the administration of an off-season competition run along FRC-like lines.  It provides a simple text display that can be shown to competitors and also overlaid on a video feed.  It also provides a simple control interface that allows officials to start matches and display scores.
 
-Team lists, match lists, and match scores are maintained in a Google spreadsheet.
+Team lists, match lists, and match scores are maintained in a Google spreadsheet, which this service accesses read-only.
 
 Note: There is no attempt to interact with driver station software, so teams are responsible for complying with start/stop.
 
@@ -12,6 +12,8 @@ Two interfaces are provided:
 
 Note: To use this yourself, you will minimally need to:
 * Create a Google service user account and save the credentials in `service-credentials.json` (not saved in GitHub).
-* Create a new Google spreadsheet with the appropriate tables.  See `sheet.py` for the tabe names, and the HTML files in `template` for the column names.
+* Create a Google spreadsheet with the appropriate tables.  See `sheet.py` to find or change the table names, and the HTML files in `template` for the column names.
 * Share the spreadsheet with the service user (read only)
 * Change the spreadsheet id in `sheet.py`
+
+To run, invoke `run.sh`.  The only pre-requisite is Docker.
