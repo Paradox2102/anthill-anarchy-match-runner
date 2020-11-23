@@ -1,3 +1,14 @@
+{#
+This HTML fragment is used to show a table of matches.   
+
+Template variables:
+    matches: array of match objects, with the following fields (with Red/Blue variants as shown):
+        Match: Identifier for match
+        Red/Blue Competitors: Label for red/blue team
+        Red/Blue Score: Score for red/blue team.
+
+Note: As a special case, scores are not shown if both are zero, so this table cannot handle a zero score game.
+#}
 <table class="table" style="align: center; vertical-align: middle; width: 100%; height: 100%;">
     {% for match in matches %}
         <tr>

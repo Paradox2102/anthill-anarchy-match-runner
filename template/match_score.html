@@ -1,3 +1,17 @@
+{#
+This HTML fragment generates a table showing the detailed scores for a specific game.
+
+Tmplate variables:
+    match: Match object with the following fields (with red/blue variants as shown):
+        Match: Identifier for match, e.g. "R1"
+        Red/Blue Competitors: Label for team
+        Red/Blue Common Balls: Score for 1-point balls (also count of 1-point balls scored).
+        Red/Blue Special Balls: Score for 6-, 8- and 10-point balls.
+        Red/Blue Parking: Score for parking.
+        Fouls by Red/Blue: Fouls committed by the relevant team.  
+            Note that these will be styled in the colour of the team committing the foul,
+            but shown in the column of the team receiving the points.
+#}
 <table class="table" style="align: center; vertical-align: middle; width: 100%; height: 100%;">
     <tr>
         <td class="table red" align="right">{{ match['Red Competitors'] }}</td>
@@ -32,10 +46,10 @@
     <tr>
         {% if match['Red Score'] > match['Blue Score'] %}
             <th class="table red" colspan="3">Red Wins!</th>
-        {% elif match['Red Score'] < match['Blue Score'] %}
+        {% elif match['Blue Score'] > match['Red Score'] %}
             <th class="table blue" colspan="3">Blue Wins!</th>
         {% else %}
-            <th cclass="table" oolspan="3">It's a Tie!</th>
+            <th class="table" oolspan="3">It's a Tie!</th>
         {% endif %}
     </tr>
 </table>

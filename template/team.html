@@ -1,3 +1,16 @@
+{#
+HTML fragment for  showing a list of all teams.
+
+Template variables:
+    teams: rank-sorted array of team objects with fields:
+        Rank: Rank of team, where "1" means first
+        Competitors: Label to be used for team
+        Played: Number of matches played
+        Wins: Number of matches won
+        Draws: Number of matches drawn
+        Losses: Number of matches lost
+        Score: Total points from wins (2 points) and draws (1 point) in the usual way.
+#}
 <table class="table" style="align: center; vertical-align: middle; width: 100%; height: 100%;">
     <tr>
         <th class="table">Rank</th>
