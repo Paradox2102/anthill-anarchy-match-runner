@@ -7,10 +7,8 @@ import math
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 import jinja2 
-#import gevent
-#import gevent.time as time
 import eventlet
-eventlet.monkey_patch()
+eventlet.monkey_patch() # Changes the behaviour of "import time"
 import time
 
 # Note: this module won't work without a "service-credentials.json" file, 
@@ -18,13 +16,15 @@ import time
 # For security reasons, this file is not included in the github repo.
 import sheet
 
-impatient = False # For debugging and testing; set to false for competition
+# If set to true, this reduces the time of various things like running the match and showing a table.
+# This makes it easier to test and debug.  Set it to false for actual competition.
+impatient = False 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.DEBUG)
 
-# Server files from local static folder
+# Serve files from local static folder
 app = Flask(__name__, static_url_path='', static_folder='static')
 
 app.config['SECRET_KEY'] = 'secret!'
@@ -38,7 +38,7 @@ socketio = SocketIO(app, always_connect=True)
 loader = jinja2.FileSystemLoader('template')
 env = jinja2.Environment(loader=loader, autoescape=False)
 
-# Pointed to the current thread object so it can be stopped.
+# Pointer to the current thread object so it can be stopped.
 current_thread = None 
 
 # These globals store the last value sent on various parts of the overlay
@@ -69,7 +69,7 @@ class Thread(threading.Thread):
         
     def sleep(self, sleep_time):
         """Like time.sleep(), except checks "is_stopped" and raises Exception.
-        If called with times longer than one second, will check every second."""
+        If called with times longer than one second, will check "is_stopped" every second."""
         if self.is_stopped():
             raise Exception(f"Thread {self.name} stopped")
         start = time.time()

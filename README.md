@@ -7,7 +7,7 @@ Team lists, match lists, and match scores are maintained in a Google spreadsheet
 Note: There is no attempt to interact with driver station software, so teams are responsible for complying with start/stop.
 
 Two interfaces are provided:
-* http://localhost:8081/overlay.html - Team/audience facing view suitable for video overlay
+* http://localhost:8081/overlay.html - Team/audience facing view suitable for video overlay.  Supports optional `delay` URL parameter giving a delay in seconds before server events are executed.
 * http://localhost:8081/control.html - Administration view with buttons that change the state
 
 Note: To use this yourself, you will minimally need to:
@@ -17,3 +17,19 @@ Note: To use this yourself, you will minimally need to:
 * Change the spreadsheet id in `sheet.py`
 
 To run, invoke `run.sh`.  The only pre-requisite is Docker.
+
+## Implementation notes
+
+The bulk of the implementation is in the module `app.py` which runs the microservice and handles the websocket messages.
+
+The module `sheet.py` handles fetching the matches and teams from the Google spreadsheet.
+
+The static HTML files `static/control.html` and `static/overlay.html` handle the client side of the two interfaces.  Each has an associated JavaScript file and CSS file.
+
+The HTML tables are configured in the Jinja2 template HTML files in `template`.
+
+## Future work
+
+I really want to make the text and tables auto-scale their font size.  It turns out to be hard to predict/control what "screen size" OBS will use for a browser overlay.  There are parameters to tweak, but auto-scaling would be more convenient.
+
+Control buttons ought to be coloured, ordered, or divided into sections depending on whether the match has been run already or whether it has been scored already.

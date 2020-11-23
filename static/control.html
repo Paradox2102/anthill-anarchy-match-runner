@@ -4,46 +4,8 @@
         <title>Control</title>
         <script src="//code.jquery.com/jquery-1.12.4.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
-        <script type="text/javascript" charset="utf-8">
-            $(document).ready(function() {
-                namespace = '/control';
-                var socket = io(namespace);
-                
-                function handle_button_click(event, data) {
-                    socket.emit(data['event'], data['arg']);
-                    //console.log("handle_button_click: " + data);
-                }
-                
-                socket.on('set_buttons', function(data, cb) {
-                    //console.log("set_buttons: data=" + data);
-                    var buttons = $("div#buttons");     
-                    //console.log("buttons=" + buttons);
-                    if(data['clear']) {
-                        buttons.empty();
-                    }
-                    data['buttons'].forEach(function (item, index) {
-                        var button = document.createElement("button");
-                        button.innerHTML = item["label"];
-                        //console.log("Button: " + item["label"]);
-                        button.addEventListener("click", function(event) { handle_button_click(event, item); });
-                        buttons.append(button);
-                    });
-                    if(cb) { cb(); }
-                });
-
-                socket.on('log_message', function(data, cb) {
-                    var log = $("#log");
-                    var now = new Date().toISOString();
-                    console.log(now + " " + data);
-                    log.prepend(document.createElement("br"));
-                    log.prepend(document.createTextNode(now + " " + data));
-                });                    
-            });
-            $(iframe)[0].mute();
-        </script>
-        <style>
-            body { background-color: white; }
-        </style>
+        <script src="control.js"></script>
+        <link rel="stylesheet" href="control.css" />
     </head>
     <body>
         <h1>Anthill Anarchy Control Interface</h1>

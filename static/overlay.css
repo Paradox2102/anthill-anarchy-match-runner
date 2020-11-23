@@ -1,0 +1,44 @@
+audio { volume: 25; }
+body { background-color: black; }
+.big { 
+    font-family : Verdana, Arial, san-serif;  
+    font-size: 40px;
+    text-shadow: 2px 2px #FFFF00; 
+}
+td.table,th.table {
+    font-size: 18px;
+    background-color: white;
+    opacity: 50%; 
+    color: black;
+}
+td.table.red,th.table.red { color:red !important; }
+.blue { color: blue !important; }
+div#container { height="100%"; }
+div#redteam { position:relative; height: 10em;  }
+div#redteam p { width: 100%; text-align: center; position: fixed; top: 0; left: 50%; transform: translate(-50%, -50%); color: red; }
+div#blueteam { position:relative; height: 10em; width: 100% }
+div#blueteam p { width: 100%; text-align: center; position: fixed; bottom: 0; left: 50%; transform: translate(-50%, 50%); color: blue; }
+div#match { position:relative; height: 10em; }
+div#match p { position: fixed; top: 50%; left: 0; transform: translate(0, -100%); color: white; }
+div#time { position:relative; height: 10em; }
+div#time p { position: fixed; top: 50%; right: 0; transform: translate(0, -100%); color: white; }
+div#middle { position:relative; height: 10em; text-align: center; vertical-align: middle; }
+div#middle p { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); color: green; }
+div#table {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 5%;
+    top: 5%;
+    width: 90%; /* Full width */
+    height: 90%; /* Full height */
+    //overflow: auto; /* Enable scroll if needed */
+    //font-size: 24px;
+    //background-color: white;
+    //opacity: 80%; 
+    //color: black;
+    border-spacing: 2px;
+    border: 1px solid black;
+    padding: 5px;
+}
+div#table table { width: 100%; height: 100%; }
