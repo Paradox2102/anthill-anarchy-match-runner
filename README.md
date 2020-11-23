@@ -7,33 +7,34 @@ Team lists, match lists, and match scores are maintained in a Google spreadsheet
 Note: There is no attempt to interact with driver station software, so teams are responsible for complying with start/stop.
 
 Two interfaces are provided:
-* http://localhost:8081/overlay.html - Team/audience facing view suitable for video overlay.  Supports optional `delay` URL parameter giving a delay in seconds before server events are executed, e.g. http://localhost:8081/overlay.html?delay=10
+* http://localhost:8081/overlay.html - Team-/audience-facing view suitable for video overlay.  Supports optional `delay` URL parameter giving a delay in seconds before server events are executed, e.g. http://localhost:8081/overlay.html?delay=10
 * http://localhost:8081/control.html - Administration view with buttons that change the state
 
-:warning: :sound: :mega: :boom: :headphones: :hear_no_evil: Warning: The overlay interface plays noises quite loudly.  You may not enjoy the unadjusted headphone experience.
+:warning: :sound: :mega: :boom: :headphones: :hear_no_evil: Warning: The overlay interface plays loud noises during the match, intended to be heard over speakers in a noisy competition environment.  You may not enjoy the unadjusted headphone experience.  Although the control interface includes a preview of the overlay interface, the IFRAME is muted (tested in Chrome).
 
 Note: To use this yourself, you will minimally need to:
-* Create a Google service user account and save the credentials in `service-credentials.json` (not saved in GitHub).
-* Create a Google spreadsheet with the appropriate tables.  See `sheet.py` to find or change the table names, and the HTML files in `template` for the column names.
-* Share the spreadsheet with the service user (read only)
+* Create a Google service user account (see [Creating and managing service accounts](https://cloud.google.com/iam/docs/creating-managing-service-accounts))
+* Save the credentials in `service-credentials.json` (see [Creating and managing service account keys](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)).  For security reasons, this file should not be saved in GitHub.
+* Create a Google spreadsheet with the appropriate tables.  See `sheet.py` to find or change the table names, and the HTML files in `template` for the column names.  Or copy [this example](https://docs.google.com/spreadsheets/d/1BNnA14cs9spTda4PTTuU-bUsmUI4uJ3H_fQOJnVx3xQ/edit?usp=sharing)
+* Share the spreadsheet with the service user (read-only)
 * Change the spreadsheet id in `sheet.py`
 
-To run, invoke `run.sh`.  The only pre-requisite is Docker.
+To run, invoke `./run.sh`.  The only pre-requisite is Docker.
 
 ## Implementation notes
 
-The bulk of the implementation is in the module `app.py` which runs the microservice and handles the websocket messages.
+The bulk of the implementation is in the module `app.py` which runs the microservice that handles HTTP requests and websocket messages.
 
 The module `sheet.py` handles fetching the matches and teams from the Google spreadsheet.
 
 The static HTML files `static/control.html` and `static/overlay.html` handle the client side of the two interfaces.  Each has an associated JavaScript file and CSS file.
 
-The HTML tables are configured in the Jinja2 template HTML files in `template`.
+The various HTML tables are configured in the Jinja2 template HTML fragment files in `template`.
 
 ## Future work
 
 I really want to make the text and tables auto-scale their font size.  It turns out to be hard to predict/control what "screen size" OBS will use for a browser overlay.  There are parameters to tweak, but auto-scaling would be more convenient.
 
-Control buttons ought to be coloured, ordered, or divided into sections depending on whether the match has been run already or whether it has been scored already.
+There is great scope to style buttons by function using colour, icons, order and dividing into sections.  In particular, "Start Match" buttons ought to indicate either whether the match has been run already or whether it has been scored already.
 
-Should provide volume control with, perhaps, a default that is not so obnoxiously loud.
+Although it is easy to adjust the overlay's volume in OBS, I should provide volume control with, perhaps, a default that is not so obnoxiously loud.  (For some reason, I have been unable to get AUDIO elements to honour a volume setting.)
