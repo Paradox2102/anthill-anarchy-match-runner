@@ -10,7 +10,7 @@ Two interfaces are provided:
 * http://localhost:8081/overlay.html - Team-/audience-facing view suitable for video overlay.  Supports optional `delay` URL parameter giving a delay in seconds before server events are executed, e.g. http://localhost:8081/overlay.html?delay=10
 * http://localhost:8081/control.html - Administration view with buttons that change the state
 
-:warning: :sound: :mega: :boom: :headphones: :hear_no_evil: Warning: The overlay interface plays loud noises during the match, intended to be heard over speakers in a noisy competition environment.  You may not enjoy the unadjusted headphone experience.  Although the control interface includes a preview of the overlay interface, the IFRAME is muted (tested in Chrome).
+:warning: :sound: :mega: :boom: :headphones: :hear_no_evil: Warning: The overlay interface plays loud noises during the match, intended to be heard over speakers in a noisy competition environment.  You may not enjoy the unadjusted headphone experience.  
 
 Note: To use this yourself, you will minimally need to:
 * Create a Google service user account (see [Creating and managing service accounts](https://cloud.google.com/iam/docs/creating-managing-service-accounts))
@@ -23,9 +23,14 @@ To run, invoke `./run.sh`.  The only pre-requisite is Docker.
 
 ## Implementation notes
 
-The bulk of the implementation is in the module `app.py` which runs the microservice that handles HTTP requests and websocket messages.
-
-The module `sheet.py` handles fetching the matches and teams from the Google spreadsheet.
+The microservice implementation is divided between several Python modules:
+* app: Top level microservice application
+* control: Handles messages to and from control interface
+* overlay: Handles messages to and from overlay interface
+* table: Handles instantiating complex tables
+* thread: Handles long-running tasks like the match runner
+* sheet: Handles fetching the matches and teams from the Google spreadsheet
+* config: Useful globals and central configuration
 
 The static HTML files `static/control.html` and `static/overlay.html` handle the client side of the two interfaces.  Each has an associated JavaScript file and CSS file.
 
@@ -37,4 +42,4 @@ I really want to make the text and tables auto-scale their font size.  It turns 
 
 There is great scope to style buttons by function using colour, icons, order and dividing into sections.  In particular, "Start Match" buttons ought to indicate either whether the match has been run already or whether it has been scored already.
 
-Although it is easy to adjust the overlay's volume in OBS, I should provide volume control with, perhaps, a default that is not so obnoxiously loud.  (For some reason, I have been unable to get AUDIO elements to honour a volume setting.)
+Although it is easy to adjust the overlay's volume in OBS, I should provide volume control with, perhaps, a default that is not so obnoxiously loud.  Also want to disable audio for the overlay preview within the control interface.  (For some reason, I have been unable to get AUDIO elements to honour a volume setting.)
