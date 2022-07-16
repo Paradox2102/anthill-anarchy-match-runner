@@ -8,3 +8,6 @@ Jinja2==2.11.2
 #gevent==20.9.0
 #gevent-websocket==0.10.1
 eventlet==0.28.1
+MarkupSafe==2.0.1
+itsdangerous==2.0.1
+werkzeug==2.0.3
