@@ -2,6 +2,8 @@
 
 import config
 import thread
+import control
+import overlay
 
 if __name__ == '__main__':
     config.logger.info("Running")

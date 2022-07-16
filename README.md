@@ -2,15 +2,15 @@
 
 This software was written to assist Team Paradox (2102) with the administration of an off-season competition run along FRC-like lines.  It provides a simple text display that can be shown to competitors and also overlaid on a video feed.  It also provides a simple control interface that allows officials to start matches and display scores.
 
-Team lists, match lists, and match scores are maintained in a Google spreadsheet, which this service accesses read-only.
+Team lists, match lists, and match scores are maintained in a Google spreadsheet, which this service accesses read-only.  (This is a deliberate design choice not to implement a user interface for entering data in a table and storing them persistently.)
 
 Note: There is no attempt to interact with driver station software, so teams are responsible for complying with start/stop.
 
 Two interfaces are provided:
-* http://localhost:8081/overlay.html - Team-/audience-facing view suitable for video overlay.  Supports optional `delay` URL parameter giving a delay in seconds before server events are executed, e.g. http://localhost:8081/overlay.html?delay=10
+* http://localhost:8081/overlay.html - Team-/audience-facing view suitable for video overlay.  Supports optional `delay` URL parameter giving a delay in seconds before server events are executed, e.g. http://localhost:8081/overlay.html?delay=10 ; this is useful if the video feed has a significant (but consistent) delay.
 * http://localhost:8081/control.html - Administration view with buttons that change the state
 
-:warning: :sound: :mega: :boom: :headphones: :hear_no_evil: Warning: The overlay interface plays loud noises during the match, intended to be heard over speakers in a noisy competition environment.  You may not enjoy the unadjusted headphone experience.  
+:warning: :sound: :mega: :boom: :headphones: :hear_no_evil: Warning: The overlay interface (and, via its preview iframe, the control interface) plays loud noises during the match, intended to be heard over speakers in a noisy competition environment.  You may not enjoy the unadjusted headphone experience.  
 
 Note: To use this yourself, you will minimally need to:
 * Create a Google service user account (see [Creating and managing service accounts](https://cloud.google.com/iam/docs/creating-managing-service-accounts))
@@ -24,13 +24,13 @@ To run, invoke `./run.sh`.  The only pre-requisite is Docker.
 ## Implementation notes
 
 The microservice implementation is divided between several Python modules:
-* app: Top level microservice application
-* control: Handles messages to and from control interface
-* overlay: Handles messages to and from overlay interface
-* table: Handles instantiating complex tables
-* thread: Handles long-running tasks like the match runner
-* sheet: Handles fetching the matches and teams from the Google spreadsheet
-* config: Useful globals and central configuration
+* `app`: Top level microservice application
+* `control`: Handles messages to and from control interface
+* `overlay`: Handles messages to and from overlay interface
+* `table`: Instantiating complex tables
+* `thread`: Performs long-running tasks like the match runner
+* `sheet`: Fetches the matches and teams from the Google spreadsheet
+* `config`: Useful globals and central configuration
 
 The static HTML files `static/control.html` and `static/overlay.html` handle the client side of the two interfaces.  Each has an associated JavaScript file and CSS file.
 

@@ -18,15 +18,16 @@ import table
 # Pointer to the current thread object so it can be stopped.
 current_thread = None 
 
+class StoppedException(Exception):
+    pass
+
+
 class Thread(threading.Thread):
     """
     This is an abstract parent class for the various threads that we might run to update the overlay.
     It mainly exists to support stopping.  Clients should check "is_stopped" and use the provided "sleep" method.
     """
-    
-    class StoppedException(Exception):
-        pass
-    
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.stop_event = threading.Event()
